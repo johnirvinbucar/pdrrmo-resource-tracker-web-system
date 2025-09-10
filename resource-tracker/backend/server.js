@@ -36,17 +36,25 @@ app.get("/api/resources", (req, res) => {
 });
 
 // Update a resource status
+// Update a resource (including name)
 app.put("/api/resources/:id", (req, res) => {
   const { id } = req.params;
-  const { status, teamLeader, contactNumber, members, assignedArea, cause } = req.body;
+  const { name, status, teamLeader, contactNumber, members, assignedArea, cause } = req.body;
 
   const sql = `
-    UPDATE resources 
-    SET status = ?, team_leader = ?, contact_number = ?, members = ?, assigned_area = ?, cause = ?
+    UPDATE resources
+    SET 
+      name = COALESCE(?, name),
+      status = COALESCE(?, status),
+      team_leader = COALESCE(?, team_leader),
+      contact_number = COALESCE(?, contact_number),
+      members = COALESCE(?, members),
+      assigned_area = COALESCE(?, assigned_area),
+      cause = COALESCE(?, cause)
     WHERE id = ?
   `;
 
-  db.run(sql, [status, teamLeader, contactNumber, members, assignedArea, cause, id], function (err) {
+  db.run(sql, [name, status, teamLeader, contactNumber, members, assignedArea, cause, id], function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
     } else {
@@ -54,6 +62,7 @@ app.put("/api/resources/:id", (req, res) => {
     }
   });
 });
+
 
 // Example route
 app.get("/", (req, res) => {

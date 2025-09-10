@@ -7,12 +7,17 @@ const ResourceTracker = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showOutOfServiceModal, setShowOutOfServiceModal] = useState(false);
   const [currentMedic, setCurrentMedic] = useState(null);
+  const [editingNameId, setEditingNameId] = useState(null); // ID of the medic being edited
+  const [editedName, setEditedName] = useState('');         // Temporary edited name
+
   const [assignForm, setAssignForm] = useState({
+    name: '',
     teamLeader: '',
     contactNumber: '',
     members: '',
     assignedArea: ''
   });
+
   const [cause, setCause] = useState('');
 
   // Fetch medics from backend
@@ -28,17 +33,41 @@ const ResourceTracker = () => {
     medic.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+const saveMedicName = (medicId) => {
+const updatedMedic = {
+  ...medics.find(m => m.id === medicId),
+  name: editedName
+};
+
+
+  fetch(`http://localhost:3001/api/resources/${medicId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedMedic)
+  })
+    .then(res => res.json())
+    .then(() => {
+      setMedics(medics.map(m => (m.id === medicId ? updatedMedic : m)));
+      setEditingNameId(null); // exit edit mode
+      setEditedName('');
+    })
+    .catch(err => console.error("Error updating medic name:", err));
+};
+  
+
   // Handler functions
-  const handleAssign = (medic) => {
-    setCurrentMedic(medic);
-    setAssignForm({
-      teamLeader: medic.teamLeader,
-      contactNumber: medic.contactNumber,
-      members: medic.members,
-      assignedArea: medic.assignedArea
-    });
-    setShowAssignModal(true);
-  };
+const handleAssign = (medic) => {
+  setCurrentMedic(medic);
+  setAssignForm({
+    name: medic.name,
+    teamLeader: medic.teamLeader,
+    contactNumber: medic.contactNumber,
+    members: medic.members,
+    assignedArea: medic.assignedArea
+  });
+  setShowAssignModal(true);
+};
+
 
   const handleOutOfService = (medic) => {
     setCurrentMedic(medic);
@@ -79,7 +108,7 @@ const handleAvailable = (id) => {
       ...assignForm
     };
 
-    fetch(`http://localhost:3001/api/resources/${currentMedic.id}`, {
+    fetch(`http://localhost:3001/api/resources/${currentMedic.id}`, { 
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedMedic)
@@ -144,10 +173,29 @@ const saveOutOfService = () => {
         <div className="cards-container">
           {statusMedics.map(medic => (
             <div key={medic.id} className="card">
-              <div className="card-header">
-                <h3>{medic.name}</h3>
-                <span className={`status-indicator ${medic.status.replace(/\s+/g, '-').toLowerCase()}`}></span>
-              </div>
+                <div className="card-header">
+                  {editingNameId === medic.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                      />
+                      <button onClick={() => saveMedicName(medic.id)}>Save</button>
+                      <button onClick={() => setEditingNameId(null)}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <h3>{medic.name}</h3>
+                      <button onClick={() => {
+                        setEditingNameId(medic.id);
+                        setEditedName(medic.name);
+                      }}>Edit</button>
+                    </>
+                  )}
+                  <span className={`status-indicator ${medic.status.replace(/\s+/g, '-').toLowerCase()}`}></span>
+                </div>
+
               
               {medic.status === 'Assigned' && (
                 <div className="card-details">
@@ -160,7 +208,7 @@ const saveOutOfService = () => {
               
               {medic.status === 'Out of Service' && (
                 <div className="card-details">
-                  <p><strong>Cause:</strong> {medic.cause}</p>
+                  <p><strong>Reason:</strong> {medic.cause}</p>
                 </div>
               )}
               
@@ -234,6 +282,14 @@ const saveOutOfService = () => {
               </button>
             </div>
             <div className="modal-body">
+             <div className="form-group">
+              <label>Medic Name</label>
+              <input
+                type="text"
+                value={assignForm.name}
+                onChange={(e) => setAssignForm({...assignForm, name: e.target.value})}
+              />
+            </div>
               <div className="form-group">
                 <label>Team Leader</label>
                 <input
@@ -287,7 +343,7 @@ const saveOutOfService = () => {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Cause</label>
+                <label>Reason:</label>
                 <textarea
                   value={cause}
                   onChange={(e) => setCause(e.target.value)}
