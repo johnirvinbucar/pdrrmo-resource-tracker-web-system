@@ -28,7 +28,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         action TEXT,
         medic_name TEXT,
-        timestamp TEXT
+        timestamp TEXT,
+        kind TEXT
       )
     `, (err) => {
       if (err) {
@@ -37,6 +38,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.log("Logs table ready ✅");
       }
     });
+
   }
 });
 
@@ -53,20 +55,19 @@ app.get("/api/resources", (req, res) => {
 });
 
 // Create a new resource
-// Create a new resource
 app.post("/api/resources", (req, res) => {
-  const { name, status, team_leader, contact_number, members, assigned_area, cause } = req.body;
+  const { name, status, team_leader, contact_number, members, assigned_area, cause, kind } = req.body;
   
   const sql = `
-    INSERT INTO resources (name, status, team_leader, contact_number, members, assigned_area, cause)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO resources (name, status, team_leader, contact_number, members, assigned_area, cause, kind)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
   
-  db.run(sql, [name, status, team_leader, contact_number, members, assigned_area, cause], function(err) {
+  db.run(sql, [name, status, team_leader, contact_number, members, assigned_area, cause, kind], function(err) {
     if (err) {
       res.status(500).json({ error: err.message });
     } else {
-      addLog("Added", name); // <-- log this action here
+      addLog("Added", name, kind); // ✅ include kind in log
       res.json({
         id: this.lastID,
         name,
@@ -75,7 +76,8 @@ app.post("/api/resources", (req, res) => {
         contact_number,
         members,
         assigned_area,
-        cause
+        cause,
+        kind
       });
     }
   });
@@ -83,9 +85,10 @@ app.post("/api/resources", (req, res) => {
 
 
 // Update a resource
+// Update a resource
 app.put("/api/resources/:id", (req, res) => {
   const { id } = req.params;
-  const { name, status, team_leader, contact_number, members, assigned_area, cause } = req.body;
+  const { name, status, team_leader, contact_number, members, assigned_area, cause, kind } = req.body;
 
   const sql = `
     UPDATE resources
@@ -96,19 +99,19 @@ app.put("/api/resources/:id", (req, res) => {
       contact_number = COALESCE(?, contact_number),
       members = COALESCE(?, members),
       assigned_area = COALESCE(?, assigned_area),
-      cause = COALESCE(?, cause)
+      cause = COALESCE(?, cause),
+      kind = COALESCE(?, kind)   -- ✅ added here
     WHERE id = ?
   `;
 
-db.run(sql, [name, status, team_leader, contact_number, members, assigned_area, cause, id], function (err) {
-  if (err) {
-    res.status(500).json({ error: err.message });
-  } else {
-    addLog(status, name); // <-- log the new status instead of "Updated"
-    res.json({ message: "Resource updated", changes: this.changes });
-  }
-});
-
+  db.run(sql, [name, status, team_leader, contact_number, members, assigned_area, cause, kind, id], function (err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      addLog(status, name, kind); // ✅ now passes kind
+      res.json({ message: "Resource updated", changes: this.changes });
+    }
+  });
 });
 
 // Delete a resource
@@ -119,7 +122,7 @@ db.run("DELETE FROM resources WHERE id = ?", id, function(err) {
   if (err) {
     res.status(500).json({ error: err.message });
   } else {
-    addLog("Deleted", `Medic ID ${id}`);
+    addLog("Deleted", `Medic ID ${id}`, null);
     res.json({ message: "Resource deleted", changes: this.changes });
   }
 });
@@ -138,14 +141,14 @@ app.listen(PORT, () => {
 
 
 // Helper to insert a log entry
-function addLog(action, medic_name) {
-  const timestamp = new Date().toISOString(); // e.g., 2025-09-10T10:30:00.000Z
-  const sql = `INSERT INTO logs (action, medic_name, timestamp) VALUES (?, ?, ?)`;
-  db.run(sql, [action, medic_name, timestamp], (err) => {
+function addLog(action, medic_name, kind) {
+  const timestamp = new Date().toISOString();
+  const sql = `INSERT INTO logs (action, medic_name, timestamp, kind) VALUES (?, ?, ?, ?)`;
+  db.run(sql, [action, medic_name, timestamp, kind], (err) => {
     if (err) {
       console.error("Error inserting log:", err.message);
     } else {
-      console.log(`Log added: [${action}] ${medic_name} at ${timestamp}`);
+      console.log(`Log added: [${action}] ${medic_name} (${kind}) at ${timestamp}`);
     }
   });
 }
