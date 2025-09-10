@@ -276,9 +276,9 @@ const [loadingLogs, setLoadingLogs] = useState(false);
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-             <div className="date-time">
+             {/* <div className="date-time">
                 {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
-              </div>
+              </div> */}
 
 {/* LOG Button */}
 <button
@@ -309,7 +309,7 @@ const [loadingLogs, setLoadingLogs] = useState(false);
           {renderColumn('Out of Service')}
         </div>
 
-        
+
 {showLogsModal && (
   <div className="logs-modal">
     <div className="logs-modal-content">
