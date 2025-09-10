@@ -4,7 +4,6 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const cors = require("cors");
 
-
 const app = express();
 const PORT = 3001;
 
@@ -35,11 +34,37 @@ app.get("/api/resources", (req, res) => {
   });
 });
 
-// Update a resource status
-// Update a resource (including name)
+// Create a new resource
+app.post("/api/resources", (req, res) => {
+  const { name, status, team_leader, contact_number, members, assigned_area, cause } = req.body;
+  
+  const sql = `
+    INSERT INTO resources (name, status, team_leader, contact_number, members, assigned_area, cause)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.run(sql, [name, status, team_leader, contact_number, members, assigned_area, cause], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({
+        id: this.lastID,
+        name,
+        status,
+        team_leader,
+        contact_number,
+        members,
+        assigned_area,
+        cause
+      });
+    }
+  });
+});
+
+// Update a resource
 app.put("/api/resources/:id", (req, res) => {
   const { id } = req.params;
-  const { name, status, teamLeader, contactNumber, members, assignedArea, cause } = req.body;
+  const { name, status, team_leader, contact_number, members, assigned_area, cause } = req.body;
 
   const sql = `
     UPDATE resources
@@ -54,7 +79,7 @@ app.put("/api/resources/:id", (req, res) => {
     WHERE id = ?
   `;
 
-  db.run(sql, [name, status, teamLeader, contactNumber, members, assignedArea, cause, id], function (err) {
+  db.run(sql, [name, status, team_leader, contact_number, members, assigned_area, cause, id], function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
     } else {
@@ -63,6 +88,18 @@ app.put("/api/resources/:id", (req, res) => {
   });
 });
 
+// Delete a resource
+app.delete("/api/resources/:id", (req, res) => {
+  const { id } = req.params;
+  
+  db.run("DELETE FROM resources WHERE id = ?", id, function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ message: "Resource deleted", changes: this.changes });
+    }
+  });
+});
 
 // Example route
 app.get("/", (req, res) => {
