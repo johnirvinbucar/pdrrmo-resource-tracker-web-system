@@ -2,6 +2,10 @@
   import './ResourceTracker.css';
 
   const ResourceTracker = () => {
+    const [showLogsModal, setShowLogsModal] = useState(false);
+const [logs, setLogs] = useState([]);
+const [loadingLogs, setLoadingLogs] = useState(false);
+
     const [medics, setMedics] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -9,6 +13,7 @@
     const [showAddMedicModal, setShowAddMedicModal] = useState(false);
     const [currentMedic, setCurrentMedic] = useState(null);
     const [expandedCards, setExpandedCards] = useState({});
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [assignForm, setAssignForm] = useState({
       name: '',
       team_leader: '',
@@ -271,6 +276,30 @@
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+             <div className="date-time">
+                {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
+              </div>
+
+{/* LOG Button */}
+<button
+  className="log-button"
+  onClick={async () => {
+    setShowLogsModal(true);
+    setLoadingLogs(true);
+    try {
+      const res = await fetch("http://localhost:3001/api/logs");
+      const data = await res.json();
+      setLogs(data);
+    } catch (err) {
+      console.error("Error fetching logs:", err);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }}
+>
+  View Logs
+</button>
+ 
           </div>
         </div>
 
@@ -279,6 +308,47 @@
           {renderColumn('Assigned')}
           {renderColumn('Out of Service')}
         </div>
+
+        
+{showLogsModal && (
+  <div className="logs-modal">
+    <div className="logs-modal-content">
+      <button className="close-button" onClick={() => setShowLogsModal(false)}>
+        ×
+      </button>
+      <h2>Resource Change Logs</h2>
+      {loadingLogs ? (
+        <p>Loading...</p>
+      ) : (
+        <div className="logs-table-wrapper">
+          <table className="logs-table">
+            <thead>
+              <tr>
+                <th>Status / Action</th>
+                <th>Medic Name</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log.id}>
+                  <td>
+                    <span className={`status-badge ${log.action.replace(/\s+/g, '-').toLowerCase()}`}>
+                      {log.action}
+                    </span>
+                  </td>
+                  <td>{log.medic_name}</td>
+                  <td>{new Date(log.timestamp).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
 
         {/* Add Medic Modal */}
         {showAddMedicModal && (
