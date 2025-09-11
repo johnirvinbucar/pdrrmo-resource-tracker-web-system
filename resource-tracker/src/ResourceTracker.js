@@ -23,16 +23,15 @@ const ResourceTracker = () => {
     contact_number: '',
     members: '',
     assigned_area: '',
-    note: '' // Add this
+    note: ''
   });
   const [newMedicName, setNewMedicName] = useState('');
   const [cause, setCause] = useState('');
-    const [showAvailableModal, setShowAvailableModal] = useState(false);
+  const [showAvailableModal, setShowAvailableModal] = useState(false);
   const [availableNote, setAvailableNote] = useState('');
   const [resourceLogs, setResourceLogs] = useState({});
 
-
-   const fetchLogs = async (resourceId) => {
+  const fetchLogs = async (resourceId) => {
     try {
       const response = await fetch(`http://localhost:3001/api/resources/${resourceId}/logs`);
       const logs = await response.json();
@@ -42,9 +41,9 @@ const ResourceTracker = () => {
     }
   };
   
-const refreshResourceLogs = async (resourceId) => {
-  await fetchLogs(resourceId);
-};
+  const refreshResourceLogs = async (resourceId) => {
+    await fetchLogs(resourceId);
+  };
 
   // Fetch medics from backend
   useEffect(() => {
@@ -74,7 +73,8 @@ const refreshResourceLogs = async (resourceId) => {
       team_leader: medic.team_leader || '',
       contact_number: medic.contact_number || '',
       members: medic.members || '',
-      assigned_area: medic.assigned_area || ''
+      assigned_area: medic.assigned_area || '',
+      note: ''
     });
     setShowAssignModal(true);
   };
@@ -84,6 +84,7 @@ const refreshResourceLogs = async (resourceId) => {
     setCause(medic.cause || '');
     setShowOutOfServiceModal(true);
   };
+
   const handleAvailable = (medic) => {
     setCurrentMedic(medic);
     setAvailableNote('');
@@ -107,12 +108,6 @@ const refreshResourceLogs = async (resourceId) => {
       });
 
       if (updateResponse.ok) {
-  setMedics(medics.map((m) => (m.id === currentMedic.id ? updatedMedic : m)));
-  setShowAssignModal(false);
-  // Refresh logs for this resource
-  refreshResourceLogs(currentMedic.id);
-}
- {
         // Add log entry
         await fetch(`http://localhost:3001/api/resources/${currentMedic.id}/logs`, {
           method: "POST",
@@ -125,61 +120,63 @@ const refreshResourceLogs = async (resourceId) => {
 
         setMedics(medics.map(m => (m.id === currentMedic.id ? updatedMedic : m)));
         setShowAvailableModal(false);
+        refreshResourceLogs(currentMedic.id);
       }
     } catch (error) {
       console.error("Error updating medic:", error);
     }
   };
-const handleCardExpand = async (medic) => {
-  const willExpand = !expandedCards[medic.id];
-  setExpandedCards(prev => ({ ...prev, [medic.id]: !prev[medic.id] }));
-  
-  // Fetch logs when expanding if not already fetched
-  if (willExpand && !resourceLogs[medic.id]) {
-    await fetchLogs(medic.id);
-  }
-};
-const handleAddMedic = async () => {
-  if (!newMedicName || !newMedicKind) {
-    alert("Please fill in at least Name and Kind");
-    return;
-  }
 
-  const newMedic = {
-    name: newMedicName,
-    kind: newMedicKind,
-    team_leader: newMedicTeamLeader,
-    contact_number: newMedicContact,
-    members: newMedicMembers,
-    status: "Available"
+  const handleCardExpand = async (medic) => {
+    const willExpand = !expandedCards[medic.id];
+    setExpandedCards(prev => ({ ...prev, [medic.id]: !prev[medic.id] }));
+    
+    // Fetch logs when expanding if not already fetched
+    if (willExpand && !resourceLogs[medic.id]) {
+      await fetchLogs(medic.id);
+    }
   };
 
-  try {
-    const response = await fetch("http://localhost:3001/api/resources", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMedic)
-    });
-
-    if (response.ok) {
-      const savedMedic = await response.json();
-      setMedics([...medics, savedMedic]);
-
-      // Remove the manual log creation - the server handles it automatically
-      // Reset fields
-      setNewMedicName("");
-      setNewMedicKind("");
-      setNewMedicTeamLeader("");
-      setNewMedicContact("");
-      setNewMedicMembers("");
-      setShowAddMedicModal(false);
-    } else {
-      alert("Failed to add medic");
+  const handleAddMedic = async () => {
+    if (!newMedicName || !newMedicKind) {
+      alert("Please fill in at least Name and Kind");
+      return;
     }
-  } catch (error) {
-    console.error("Error adding medic:", error);
-  }
-};
+
+    const newMedic = {
+      name: newMedicName,
+      kind: newMedicKind,
+      team_leader: newMedicTeamLeader,
+      contact_number: newMedicContact,
+      members: newMedicMembers,
+      status: "Available"
+    };
+
+    try {
+      const response = await fetch("http://localhost:3001/api/resources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newMedic)
+      });
+
+      if (response.ok) {
+        const savedMedic = await response.json();
+        setMedics([...medics, savedMedic]);
+
+        // Reset fields
+        setNewMedicName("");
+        setNewMedicKind("");
+        setNewMedicTeamLeader("");
+        setNewMedicContact("");
+        setNewMedicMembers("");
+        setShowAddMedicModal(false);
+      } else {
+        alert("Failed to add medic");
+      }
+    } catch (error) {
+      console.error("Error adding medic:", error);
+    }
+  };
 
   const handleDeleteMedic = (id) => {
     if (window.confirm("Are you sure you want to delete this medic?")) {
@@ -193,33 +190,47 @@ const handleAddMedic = async () => {
         .catch(err => console.error("Error deleting medic:", err));
     }
   };
- // Modify saveAssign to add log
-const saveAssign = async () => {
-  const updatedMedic = {
-    ...currentMedic,
-    status: "Assigned",
-    assigned_area: assignForm.assigned_area
+
+  const saveAssign = async () => {
+    const updatedMedic = {
+      ...currentMedic,
+      status: "Assigned",
+      assigned_area: assignForm.assigned_area
+    };
+
+    try {
+      // Update resource
+      const updateResponse = await fetch(`http://localhost:3001/api/resources/${currentMedic.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedMedic),
+      });
+
+      if (updateResponse.ok) {
+        // Determine if this is a new assignment or reassignment
+        const action = currentMedic.status === "Assigned" ? "Reassigned" : "Assigned";
+        
+        // Add log entry
+        await fetch(`http://localhost:3001/api/resources/${currentMedic.id}/logs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+
+            
+            action: action,
+            note: assignForm.note || `Assigned to ${assignForm.assigned_area}`
+          })
+        });
+
+        setMedics(medics.map((m) => (m.id === currentMedic.id ? updatedMedic : m)));
+        setShowAssignModal(false);
+        refreshResourceLogs(currentMedic.id);
+      }
+    } catch (error) {
+      console.error("Error updating medic:", error);
+    }
   };
 
-  try {
-    // Update resource
-    const updateResponse = await fetch(`http://localhost:3001/api/resources/${currentMedic.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedMedic),
-    });
-
-if (updateResponse.ok) {
-  setMedics(medics.map((m) => (m.id === currentMedic.id ? updatedMedic : m)));
-  setShowAssignModal(false);
-  // Refresh logs for this resource
-  refreshResourceLogs(currentMedic.id);
-}
-  } catch (error) {
-    console.error("Error updating medic:", error);
-  }
-};
- // Modify saveOutOfService to add log
   const saveOutOfService = async () => {
     const updatedMedic = {
       ...currentMedic,
@@ -236,11 +247,6 @@ if (updateResponse.ok) {
       });
 
       if (updateResponse.ok) {
-  setMedics(medics.map(m => (m.id === currentMedic.id ? updatedMedic : m)));
-  setShowAvailableModal(false);
-  // Refresh logs for this resource
-  refreshResourceLogs(currentMedic.id);
-} {
         // Add log entry
         await fetch(`http://localhost:3001/api/resources/${currentMedic.id}/logs`, {
           method: "POST",
@@ -253,6 +259,7 @@ if (updateResponse.ok) {
 
         setMedics(medics.map(m => (m.id === currentMedic.id ? updatedMedic : m)));
         setShowOutOfServiceModal(false);
+        refreshResourceLogs(currentMedic.id);
       }
     } catch (error) {
       console.error("Error updating medic:", error);
@@ -291,12 +298,12 @@ if (updateResponse.ok) {
                   {medic.assigned_area ? ` - ${medic.assigned_area}` : ''}
                 </h3>
                 <div className="card-header-actions">
-<button
-  className="expand-btn"
-  onClick={() => handleCardExpand(medic)}
->
-  {expandedCards[medic.id] ? '▼' : '▶'}
-</button>
+                  <button
+                    className="expand-btn"
+                    onClick={() => handleCardExpand(medic)}
+                  >
+                    {expandedCards[medic.id] ? '▼' : '▶'}
+                  </button>
                   <button 
                     className="btn-delete"
                     onClick={() => handleDeleteMedic(medic.id)}
@@ -319,22 +326,21 @@ if (updateResponse.ok) {
                     )}
                   </div>
 
-                      {/* Add the logs section here */}
-    <div className="logs-section">
-      <h4>Activity Log:</h4>
-      {resourceLogs[medic.id] ? (
-        <div className="logs-list">
-          {resourceLogs[medic.id].map(log => (
-            <div key={log.id} className="log-entry">
-              [{new Date(log.timestamp).toLocaleString()}] {log.action}
-              {log.note && ` (Note: ${log.note})`}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div>Loading logs...</div>
-      )}
-    </div>
+                  {/* Add the logs section here */}
+                  {resourceLogs[medic.id] ? (
+                    <div className="logs-list">
+                      {[...resourceLogs[medic.id]]
+                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // newest first
+                        .map(log => (
+                          <div key={log.id} className="log-entry">
+                            [{new Date(log.timestamp).toLocaleString()}] {log.action}
+                            {log.note && ` (Note: ${log.note})`}
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div>Loading logs...</div>
+                  )}
 
                   <div className="card-actions">
                     {medic.status === "Available" && (
@@ -361,8 +367,6 @@ if (updateResponse.ok) {
                   </div>
                 </>
               )}
-
-              
             </div>
           ))}
         </div>
@@ -370,7 +374,6 @@ if (updateResponse.ok) {
     );
   };
 
-  
   // Add the Available modal
   const renderAvailableModal = () => (
     <div className="modal-overlay">
@@ -414,7 +417,7 @@ if (updateResponse.ok) {
     <div className="resource-tracker">
       <div className="header">
         <div className="header-top">
-<img src="/logo.png" alt="Logo" className="logo" />
+          <img src="/logo.png" alt="Logo" className="logo" />
           <div className="header-title">
             <h1>PDRRMO-Bohol</h1>
             <p>Resource Tracker System</p>
@@ -485,17 +488,23 @@ if (updateResponse.ok) {
                       </tr>
                     </thead>
                     <tbody>
-                      {logs.map((log) => (
-                        <tr key={log.id}>
-                          <td>
-                            <span className={`status-badge ${log.action.replace(/\s+/g, '-').toLowerCase()}`}>
-                              {log.action}
-                            </span>
-                          </td>
-                          <td>{log.medic_name}</td>
-                          <td>{new Date(log.timestamp).toLocaleString()}</td>
-                        </tr>
-                      ))}
+                      {[...logs]
+                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        .map((log) => (
+                          <tr key={log.id}>
+                            <td>
+                              <span
+                                className={`status-badge ${log.action
+                                  .replace(/\s+/g, "-")
+                                  .toLowerCase()}`}
+                              >
+                                {log.action}
+                              </span>
+                            </td>
+                            <td>{log.medic_name}</td>
+                            <td>{new Date(log.timestamp).toLocaleString()}</td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -504,128 +513,128 @@ if (updateResponse.ok) {
           </div>
         </div>
       )}
-{showAddMedicModal && (
-  <div className="modal-overlay">
-    <div className="modal">
-      <div className="modal-header">
-        <h2>Add New Resource</h2>
-        <button
-          className="modal-close"
-          onClick={() => setShowAddMedicModal(false)}
-        >
-          &times;
-        </button>
-      </div>
-      <div className="modal-body">
-        <div className="form-group">
-          <label>Name:</label>
-          <input
-            type="text"
-            value={newMedicName}
-            onChange={(e) => setNewMedicName(e.target.value)}
-            placeholder="Enter resource name"
-          />
-        </div>
-        <div className="form-group">
-          <label>Kind:</label>
-          <input
-            type="text"
-            value={newMedicKind}
-            onChange={(e) => setNewMedicKind(e.target.value)}
-            placeholder="Medic, Vehicle, Equipment..."
-          />
-        </div>
-        <div className="form-group">
-          <label>Team Leader:</label>
-          <input
-            type="text"
-            value={newMedicTeamLeader}
-            onChange={(e) => setNewMedicTeamLeader(e.target.value)}
-            placeholder="Enter team leader name"
-          />
-        </div>
-        <div className="form-group">
-          <label>Contact Number:</label>
-          <input
-            type="text"
-            value={newMedicContact}
-            onChange={(e) => setNewMedicContact(e.target.value)}
-            placeholder="Enter contact number"
-          />
-        </div>
-        <div className="form-group">
-          <label>Members:</label>
-          <textarea
-            value={newMedicMembers}
-            onChange={(e) => setNewMedicMembers(e.target.value)}
-            placeholder="List of members"
-          />
-        </div>
-      </div>
-      <div className="modal-footer">
-        <button
-          className="btn-secondary"
-          onClick={() => setShowAddMedicModal(false)}
-        >
-          Cancel
-        </button>
-        <button className="btn-primary" onClick={handleAddMedic}>
-          Create
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 
-{showAssignModal && (
-  <div className="modal-overlay">
-    <div className="modal">
-      <div className="modal-header">
-        <h2>Assign Area - {currentMedic?.name}</h2>
-        <button
-          className="modal-close"
-          onClick={() => setShowAssignModal(false)}
-        >
-          &times;
-        </button>
-      </div>
-      <div className="modal-body">
-        <div className="form-group">
-          <label>Assigned Area</label>
-          <input
-            type="text"
-            value={assignForm.assigned_area}
-            onChange={(e) =>
-              setAssignForm({ ...assignForm, assigned_area: e.target.value })
-            }
-            placeholder="Enter assigned area"
-          />
+      {showAddMedicModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>Add New Resource</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowAddMedicModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Name:</label>
+                <input
+                  type="text"
+                  value={newMedicName}
+                  onChange={(e) => setNewMedicName(e.target.value)}
+                  placeholder="Enter resource name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Kind:</label>
+                <input
+                  type="text"
+                  value={newMedicKind}
+                  onChange={(e) => setNewMedicKind(e.target.value)}
+                  placeholder="Medic, Vehicle, Equipment..."
+                />
+              </div>
+              <div className="form-group">
+                <label>Team Leader:</label>
+                <input
+                  type="text"
+                  value={newMedicTeamLeader}
+                  onChange={(e) => setNewMedicTeamLeader(e.target.value)}
+                  placeholder="Enter team leader name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Contact Number:</label>
+                <input
+                  type="text"
+                  value={newMedicContact}
+                  onChange={(e) => setNewMedicContact(e.target.value)}
+                  placeholder="Enter contact number"
+                />
+              </div>
+              <div className="form-group">
+                <label>Members:</label>
+                <textarea
+                  value={newMedicMembers}
+                  onChange={(e) => setNewMedicMembers(e.target.value)}
+                  placeholder="List of members"
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowAddMedicModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={handleAddMedic}>
+                Create
+              </button>
+            </div>
+          </div>
         </div>
-        {/* Move the note field here */}
-        <div className="form-group">
-          <label>Note (optional):</label>
-          <textarea
-            value={assignForm.note}
-            onChange={(e) => setAssignForm({ ...assignForm, note: e.target.value })}
-            rows={3}
-            placeholder="Enter any notes about this assignment"
-          />
+      )}
+
+      {showAssignModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>{currentMedic?.status === "Assigned" ? "Reassign" : "Assign"} Area - {currentMedic?.name}</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowAssignModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Assigned Area</label>
+                <input
+                  type="text"
+                  value={assignForm.assigned_area}
+                  onChange={(e) =>
+                    setAssignForm({ ...assignForm, assigned_area: e.target.value })
+                  }
+                  placeholder="Enter assigned area"
+                />
+              </div>
+              <div className="form-group">
+                <label>Note (optional):</label>
+                <textarea
+                  value={assignForm.note}
+                  onChange={(e) => setAssignForm({ ...assignForm, note: e.target.value })}
+                  rows={3}
+                  placeholder="Enter any notes about this assignment"
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowAssignModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={saveAssign}>
+                {currentMedic?.status === "Assigned" ? "Reassign" : "Assign"}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="modal-footer">
-        <button
-          className="btn-secondary"
-          onClick={() => setShowAssignModal(false)}
-        >
-          Cancel
-        </button>
-        <button className="btn-primary" onClick={saveAssign}>
-          Save Assignment
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {showOutOfServiceModal && (
         <div className="modal-overlay">
@@ -655,8 +664,8 @@ if (updateResponse.ok) {
         </div>
       )}
 
-          {/* Add the Available modal here */}
-    {showAvailableModal && renderAvailableModal()}
+      {/* Add the Available modal here */}
+      {showAvailableModal && renderAvailableModal()}
     </div>
   );
 };

@@ -89,7 +89,7 @@ app.post("/api/resources", (req, res) => {
       
       // Add to resource_logs
       const logSql = `INSERT INTO resource_logs (resource_id, action, note) VALUES (?, ?, ?)`;
-      db.run(logSql, [resourceId, "Created in staging area", ""], (err) => {
+      db.run(logSql, [resourceId, "Staging area", ""], (err) => {
         if (err) console.error("Error creating resource log:", err.message);
       });
       
