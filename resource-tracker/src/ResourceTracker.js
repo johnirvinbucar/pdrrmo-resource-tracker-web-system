@@ -280,9 +280,9 @@ const ResourceTracker = () => {
     <div className="resource-tracker">
       <div className="header">
         <div className="header-top">
-          <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBmaWxsPSIjZmZmIj48cGF0aCBkPSJNMjU2IDhDMTE5IDggOCAxMTkgOCAyNTZzMTExIDI0OCAyNDggMjQ4IDI0OC0xMTEgMjQ4LTI0OFMzOTMgOCAyNTYgOHptMCA0NDhjLTExMC41IDAtMjAwLTg5LjUtMjAwLTIwMFMxNDUuNSA1NiAyNTYgNTZzMjAwIDg5LjUgMjAwIDIwMC04OS41IDIwMC0yMDAgMjAwem0xMDgtMTYwSDE0OGMtNi42IDAtMTItNS40LTEyLTEydjU2YzAgNi42IDUuNCAxMiAxMiAxMmg0NGMyMjMuNyAwIDE2MC0yOS42IDE2MCAxNnY0OGMwIDYuNiA1LjQgMTIgMTIgMTJoNTZjNi42IDAgMTItNS40IDEyLTEydi00OGMwLTQyLjctNTQuOS-642N64yNjRIMTQ4Yy02LjYgMC0xMi01LjQtMTItMTJ2LTU2YzAtNi42IDUuNC0xMiAxMi0xMmg0NGM0NC4yIDAgNTYuOC0xNy45IDU3LjQtNDguNi4xLTUuMiA0LjQtOS40IDkuNi05LjRoNjRjNS4xIDAgOS40IDQuMiA5LjYgOS40LjYgMzAuNyAxMy4yIDQ4LjYgNTcuNCA0OC42aDQ0YzYuNiAwIDEyIDUuNCAxMiAxMnY1NmMwIDYuNi01LjQgMTItMTIgMTJ6Ii8+PC9zdmc+" alt="Logo" className="logo" />
+<img src="/logo.png" alt="Logo" className="logo" />
           <div className="header-title">
-            <h1>OPDRRMO-Bohol</h1>
+            <h1>PDRRMO-Bohol</h1>
             <p>Resource Tracker System</p>
           </div>
         </div>
